@@ -1,3 +1,11 @@
+/***LED Table***
+ * Created by: Nick Janita
+ * 
+ * How to use: Designed to be used with a button to
+ * switch modes. All that needs to be changed is the defined
+ * variables depending on how many rows/leds you are using. 
+*/
+
 #include <FastLED.h>
 
 FASTLED_USING_NAMESPACE
@@ -6,70 +14,84 @@ FASTLED_USING_NAMESPACE
 #define LED_TYPE    NEOPIXEL
 #define COLOR_ORDER GRB
 #define NUM_LEDS    300
-#define ROW_1   NUM_LEDS/3
+#define ROW_0   0
+#define ROW_1   NUM_LEDS/3 - 1
 #define ROW_2   NUM_LEDS/3 + ROW_1
-#define ROW_3   NUM_LEDS/3 + ROW_2
-CRGB leds[NUM_LEDS];
-
-#define AUDIO_INPUT A0
 #define BRIGHTNESS          50
 #define FRAMES_PER_SECOND  120
-int button = 8;
+#define NUM_PATTERNS 5
+#define BUTTON_PIN  8;
+
+//Initializing memory for LEDS
+CRGB leds[NUM_LEDS];
+
 void setup() {
   delay(3000); // 3 second delay for recovery
   
-  // tell FastLED about the LED strip configuration
+  //Configuring leds to FastLED
   FastLED.addLeds<LED_TYPE,DATA_PIN>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
-  // set master brightness control
+  //Setting intial brightness
   FastLED.setBrightness(BRIGHTNESS);
-  pinMode(button, INPUT_PULLUP); // set the internal pull up resistor, unpressed button is HIGH
-  
+
+  //Setting up button with a Pullup resistor (press is low)
+  pinMode(BUTTON_PIN, INPUT_PULLUP); 
+
 }
 
+   //Creating array of the pattern functions
+  typedef void (*ledPatterns)();
+  ledPatterns patternList[] = {rainbow, confetti, OHIO, juggle, bpm};
+  
+  // Index number of which pattern is currently playing
+  int patternIndex = 0;
+  //Base color that rotates
+  int gHue = 0;
 
-// List of patterns to cycle through.  Each is defined as a separate function below.
-typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = {rainbow, confetti, snakeboi, juggle, bpm};
-
-uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
-uint8_t gHue = 0; // rotating "base color" used by many of the patterns
   
 void loop()
-{
-  // Call the current pattern function once, updating the 'leds' array
-  gPatterns[gCurrentPatternNumber]();
+{ 
+  //plays current pattern
+  patternList[patternIndex]();
 
-  // send the 'leds' array out to the actual LED strip
+  //Shows the current LED pattern
   FastLED.show();  
-  // insert a delay to keep the framerate modest
-  FastLED.delay(1000/FRAMES_PER_SECOND); 
-  if(digitalRead(button) == false){
-    delay(500);
+  
+  //Delay to change speed of the LEDS
+  FastLED.delay(1000/FRAMES_PER_SECOND);
+
+   //Reading if button is pressed, if it is, half second delay and pattern change
+  if(digitalRead(BUTTON_PIN) == false){
     nextPattern();
+    delay(500);
   }
-  // do some periodic updates
-  EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
+
+  //Changes the speed of the color change in patterns that use gHue
+  EVERY_N_MILLISECONDS(10) {
+    ++gHue;
+    } 
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
+//
 void nextPattern()
 {
-  // add one to the current pattern number, and wrap around at the end
-  gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns);
+  ++patternIndex;
+  if(patternIndex >= 5){
+    patternIndex = 0;
+  }
 }
 
 void rainbow() 
 {
-  // FastLED's built-in rainbow generator
-  fill_rainbow(&leds[0], ROW_1, gHue, 7);
-  fill_rainbow(&leds[99], ROW_2, gHue, 7); 
-  fill_rainbow(&leds[199], ROW_3, gHue, 7);
+  // using the rainbow function, the LEDS are split evenly so the effect is even in table
+  fill_rainbow(&leds[ROW_0], ROW_1, gHue, 7);
+  fill_rainbow(&leds[ROW_1], ROW_2, gHue, 7); 
+  fill_rainbow(&leds[ROW_2], NUM_LEDS, gHue, 7);
 }
 
-
+//TODO: Get rid of this ugly pattern
 void confetti() 
 {
   // random colored speckles that blink in and fade smoothly
@@ -78,7 +100,9 @@ void confetti()
   leds[pos] += CHSV( gHue + random8(64), 200, 255);
 }
 
-void snakeboi()
+
+//TODO: create an escape for when button is pressed and clean up code cause good god 
+void OHIO()
 {
   for(int dot = 0; dot < 100; dot++) { 
     //O
@@ -86,9 +110,9 @@ void snakeboi()
       leds[dot+i] = CRGB::Red;
     }
     //Second layer
-    leds[100+dot] = CRGB::Red;
-    leds[100+dot+1] = CRGB::White;
-    leds[100+dot+2] = CRGB::Red;
+    leds[ROW_1+dot] = CRGB::Red;
+    leds[ROW_1+dot+1] = CRGB::White;
+    leds[ROW_1+dot+2] = CRGB::Red;
     //Third
     for(int i = 0;i<3;++i){
       leds[200+dot+i] = CRGB::Red;
@@ -100,32 +124,32 @@ void snakeboi()
     leds[6+dot] =CRGB::Red;
     //Middle
     for(int i = 4;i<7;++i){
-      leds[100+dot+i] = CRGB::Red;
+      leds[ROW_1+dot+i] = CRGB::Red;
     }
      //Bottom
-    leds[200+4+dot] =CRGB::Red;
-    leds[200+5+dot] = CRGB::White;
-    leds[200+6+dot] =CRGB::Red;
+    leds[ROW_2+4+dot] =CRGB::Red;
+    leds[ROW_2+5+dot] = CRGB::White;
+    leds[ROW_2+6+dot] =CRGB::Red;
 
     //I
     leds[8+dot] = CRGB::Red;
     leds[100+8+dot] = CRGB::Red;
-    leds[200+8+dot] = CRGB::Red;
+    leds[ROW_2+8+dot] = CRGB::Red;
     leds[9+dot] = CRGB::White;
     leds[100+9+dot] = CRGB::White;
-    leds[200+9+dot] = CRGB::White;
+    leds[ROW_2+9+dot] = CRGB::White;
 
     //O
     for(int i = 0;i<3;++i){
       leds[10+dot+i] = CRGB::Red;
     }
     //Second layer
-    leds[10+100+dot] = CRGB::Red;
-    leds[10+100+dot+1] = CRGB::White;
-    leds[10+100+dot+2] = CRGB::Red;
+    leds[10+ROW_1+dot] = CRGB::Red;
+    leds[10+ROW_1+dot+1] = CRGB::White;
+    leds[10+ROW_1+dot+2] = CRGB::Red;
     //Third
     for(int i = 0;i<3;++i){
-      leds[10+200+dot+i] = CRGB::Red;
+      leds[10+ROW_2+dot+i] = CRGB::Red;
     }
 
     
@@ -133,21 +157,24 @@ void snakeboi()
     FastLED.show();
             // clear this led for the next time around the loop
             leds[dot] = CRGB::White;
-            leds[dot+100]=CRGB::White;
-            leds[dot+200]=CRGB::White;
+            leds[dot+ROW_1]=CRGB::White;
+            leds[dot+ROW_2]=CRGB::White;
             leds[dot+4] = CRGB::White;
-            leds[dot+100+4]=CRGB::White;
-            leds[dot+200+4]=CRGB::White;
+            leds[dot+ROW_1+4]=CRGB::White;
+            leds[dot+ROW_2+4]=CRGB::White;
             leds[dot+8] = CRGB::White;
-            leds[dot+100+8]=CRGB::White;
-            leds[dot+200+8]=CRGB::White;
+            leds[dot+ROW_1+8]=CRGB::White;
+            leds[dot+ROW_2+8]=CRGB::White;
             leds[dot+10] = CRGB::White;
-            leds[dot+100+10]=CRGB::White;
-            leds[dot+200+10]=CRGB::White;
+            leds[dot+ROW_1+10]=CRGB::White;
+            leds[dot+ROW_2+10]=CRGB::White;
             delay(100);
         }
 }
 
+
+//Some extra functions that were found
+//TODO: split evenly between the rows
 void bpm()
 {
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
