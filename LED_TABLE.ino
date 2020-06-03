@@ -72,9 +72,8 @@ void loop()
     } 
 }
 
-#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
-//
+//Adds one to the array playing the next pattern
 void nextPattern()
 {
   ++patternIndex;
