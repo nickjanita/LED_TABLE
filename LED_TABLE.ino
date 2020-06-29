@@ -9,25 +9,26 @@
 #include <FastLED.h>
 
 FASTLED_USING_NAMESPACE
-
+//567 is original num
 #define DATA_PIN    2
 #define LED_TYPE    NEOPIXEL
 #define COLOR_ORDER GRB
-#define NUM_LEDS    300
+#define NUM_LEDS    567
 #define ROW_0   0
-#define ROW_1   NUM_LEDS/3 - 1
+#define ROW_1   NUM_LEDS/3 
 #define ROW_2   NUM_LEDS/3 + ROW_1
 #define BRIGHTNESS          50
-#define FRAMES_PER_SECOND  120
-#define NUM_PATTERNS 5
-#define BUTTON_PIN  8;
+#define FRAMES_PER_SECOND  240
+#define NUM_PATTERNS 7
+#define BUTTON_PIN  8
 
 //Initializing memory for LEDS
 CRGB leds[NUM_LEDS];
 
 void setup() {
   delay(3000); // 3 second delay for recovery
-  
+  //Serial.begin(9600);
+  //Bluetooth Value
   //Configuring leds to FastLED
   FastLED.addLeds<LED_TYPE,DATA_PIN>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
@@ -36,17 +37,19 @@ void setup() {
 
   //Setting up button with a Pullup resistor (press is low)
   pinMode(BUTTON_PIN, INPUT_PULLUP); 
+  
 
 }
 
    //Creating array of the pattern functions
   typedef void (*ledPatterns)();
-  ledPatterns patternList[] = {rainbow, confetti, OHIO, juggle, bpm};
+  ledPatterns patternList[] = {solidRainbow,rainbow, confetti, OHIO, juggle, bpm,caramelldansen};
   
   // Index number of which pattern is currently playing
   int patternIndex = 0;
   //Base color that rotates
   int gHue = 0;
+  int color =0;
 
   
 void loop()
@@ -55,19 +58,22 @@ void loop()
   patternList[patternIndex]();
 
   //Shows the current LED pattern
-  FastLED.show();  
+  if(patternIndex != 0){
+      FastLED.show();  
+      FastLED.delay(1000/FRAMES_PER_SECOND);
+  }
   
   //Delay to change speed of the LEDS
-  FastLED.delay(1000/FRAMES_PER_SECOND);
+  //
 
    //Reading if button is pressed, if it is, half second delay and pattern change
-  if(digitalRead(BUTTON_PIN) == false){
+  if((digitalRead(BUTTON_PIN) == false)){
     nextPattern();
     delay(500);
   }
 
   //Changes the speed of the color change in patterns that use gHue
-  EVERY_N_MILLISECONDS(10) {
+  EVERY_N_MILLISECONDS(1) {
     ++gHue;
     } 
 }
@@ -77,7 +83,7 @@ void loop()
 void nextPattern()
 {
   ++patternIndex;
-  if(patternIndex >= 5){
+  if(patternIndex >= NUM_PATTERNS){
     patternIndex = 0;
   }
 }
@@ -86,8 +92,9 @@ void rainbow()
 {
   // using the rainbow function, the LEDS are split evenly so the effect is even in table
   fill_rainbow(&leds[ROW_0], ROW_1, gHue, 7);
-  fill_rainbow(&leds[ROW_1], ROW_2, gHue, 7); 
-  fill_rainbow(&leds[ROW_2], NUM_LEDS, gHue, 7);
+  fill_rainbow(&leds[ROW_1], ROW_1, gHue, 7); 
+  fill_rainbow(&leds[ROW_2], ROW_1, gHue, 7);
+
 }
 
 //TODO: Get rid of this ugly pattern
@@ -103,72 +110,100 @@ void confetti()
 //TODO: create an escape for when button is pressed and clean up code cause good god 
 void OHIO()
 {
-  for(int dot = 0; dot < 100; dot++) { 
-    //O
-    for(int i = 0;i<3;++i){
-      leds[dot+i] = CRGB::Red;
-    }
-    //Second layer
-    leds[ROW_1+dot] = CRGB::Red;
-    leds[ROW_1+dot+1] = CRGB::White;
-    leds[ROW_1+dot+2] = CRGB::Red;
-    //Third
-    for(int i = 0;i<3;++i){
-      leds[200+dot+i] = CRGB::Red;
-    }
-    //H
-    //Top
-    leds[4+dot] =CRGB::Red;
-    leds[5+dot] = CRGB::White;
-    leds[6+dot] =CRGB::Red;
-    //Middle
-    for(int i = 4;i<7;++i){
-      leds[ROW_1+dot+i] = CRGB::Red;
-    }
-     //Bottom
-    leds[ROW_2+4+dot] =CRGB::Red;
-    leds[ROW_2+5+dot] = CRGB::White;
-    leds[ROW_2+6+dot] =CRGB::Red;
+  for(int i = 0; i<NUM_LEDS; i++){
+    leds[i] = CRGB::Red;
+  }
+  FastLED.show();
+  for(int dot = 0; dot < ROW_1; dot++) { 
+    //
 
-    //I
-    leds[8+dot] = CRGB::Red;
-    leds[100+8+dot] = CRGB::Red;
-    leds[ROW_2+8+dot] = CRGB::Red;
-    leds[9+dot] = CRGB::White;
-    leds[100+9+dot] = CRGB::White;
-    leds[ROW_2+9+dot] = CRGB::White;
-
-    //O
-    for(int i = 0;i<3;++i){
-      leds[10+dot+i] = CRGB::Red;
-    }
-    //Second layer
-    leds[10+ROW_1+dot] = CRGB::Red;
-    leds[10+ROW_1+dot+1] = CRGB::White;
-    leds[10+ROW_1+dot+2] = CRGB::Red;
-    //Third
-    for(int i = 0;i<3;++i){
-      leds[10+ROW_2+dot+i] = CRGB::Red;
-    }
-
-    
-    
-    FastLED.show();
-            // clear this led for the next time around the loop
-            leds[dot] = CRGB::White;
-            leds[dot+ROW_1]=CRGB::White;
-            leds[dot+ROW_2]=CRGB::White;
-            leds[dot+4] = CRGB::White;
-            leds[dot+ROW_1+4]=CRGB::White;
-            leds[dot+ROW_2+4]=CRGB::White;
-            leds[dot+8] = CRGB::White;
-            leds[dot+ROW_1+8]=CRGB::White;
-            leds[dot+ROW_2+8]=CRGB::White;
-            leds[dot+10] = CRGB::White;
-            leds[dot+ROW_1+10]=CRGB::White;
-            leds[dot+ROW_2+10]=CRGB::White;
-            delay(100);
-        }
+    if(digitalRead(BUTTON_PIN) == true){
+      //O
+      //Bottom Layer
+      leds[ROW_0 + dot] = CRGB::White;
+      leds[ROW_0 + dot + 1] = CRGB::Red;
+      leds[ROW_0 + dot + 2] = CRGB::Red;
+      leds[ROW_0 + dot + 3] = CRGB::White;
+      
+      //Second layer
+      leds[ROW_1 + dot] = CRGB::White;
+      leds[ROW_1 + dot + 1] = CRGB::Red;
+      leds[ROW_1 + dot + 2] = CRGB::Red;
+      leds[ROW_1 + dot + 3] = CRGB::White;
+      //Third
+      leds[ROW_2 + dot] = CRGB::Red;
+      leds[ROW_2 + dot + 1] = CRGB::White;
+      leds[ROW_2 + dot + 2] = CRGB::White;
+      leds[ROW_2 + dot + 3] = CRGB::Red;
+      //Space
+      leds[ROW_0+4+dot] = CRGB::Red;
+      leds[ROW_1+4+dot] = CRGB::Red;
+      leds[ROW_2+4+dot] = CRGB::Red;
+      //H
+      //Bottom
+      leds[ROW_0+5+dot] =CRGB::White;
+      leds[ROW_0+6+dot] =CRGB::White;
+      leds[ROW_0+7+dot] =CRGB::White;
+      leds[ROW_0+8+dot] =CRGB::White;
+      //Middle
+      leds[ROW_1 + dot + 5] = CRGB::White;
+      leds[ROW_1 + dot + 6] = CRGB::Red;
+      leds[ROW_1 + dot + 7] = CRGB::Red;
+      leds[ROW_1 + dot + 8] = CRGB::White;
+      
+       //Bottom
+      leds[ROW_2 + dot + 5] = CRGB::White;
+      leds[ROW_2 + dot + 6] = CRGB::Red;
+      leds[ROW_2 + dot + 7] = CRGB::Red;
+      leds[ROW_2 + dot + 8] = CRGB::White;
+      //Space
+      leds[ROW_0+9+dot] = CRGB::Red;
+      leds[ROW_1+9+dot] = CRGB::Red;
+      leds[ROW_2+9+dot] = CRGB::Red;
+  
+      //I
+      leds[ROW_0+10+dot] = CRGB::White;
+      leds[ROW_1+10+dot] = CRGB::White;
+      leds[ROW_2+10+dot] = CRGB::White;
+      //Space
+      leds[ROW_0+11+dot] = CRGB::Red;
+      leds[ROW_1+11+dot] = CRGB::Red;
+      leds[ROW_2+11+dot] = CRGB::Red;
+      
+      //O
+      //Bottom Layer
+      leds[ROW_0 + dot +12] = CRGB::White;
+      leds[ROW_0 + dot + 13] = CRGB::Red;
+      leds[ROW_0 + dot + 14] = CRGB::Red;
+      leds[ROW_0 + dot + 15] = CRGB::White;
+      
+      //Second layer
+      leds[ROW_1 + dot + 12] = CRGB::White;
+      leds[ROW_1 + dot + 13] = CRGB::Red;
+      leds[ROW_1 + dot + 14] = CRGB::Red;
+      leds[ROW_1 + dot + 15] = CRGB::White;
+      //Third
+      leds[ROW_2 + dot + 12] = CRGB::Red;
+      leds[ROW_2 + dot + 13] = CRGB::White;
+      leds[ROW_2 + dot + 14] = CRGB::White;
+      leds[ROW_2 + dot + 15] = CRGB::Red;
+      //Space
+      leds[ROW_0+16+dot] = CRGB::Red;
+      leds[ROW_1+16+dot] = CRGB::Red;
+      leds[ROW_2+16+dot] = CRGB::Red;
+      
+      
+      FastLED.show();
+      // clear this led for the next time around the loop
+      leds[dot] = CRGB::Red;
+      leds[dot + ROW_1] = CRGB::Red;
+      leds[dot + ROW_2] = CRGB::Red;
+      delay(25);
+      }
+      else{
+        patternIndex = 3;
+      }
+   }
 }
 
 
@@ -194,4 +229,38 @@ void juggle() {
     dothue += 32;
   }
 }
+void caramelldansen(){
+  colorChange();
+  if(digitalRead(BUTTON_PIN) == true){
+    if(color == 0){
+      FastLED.showColor(CRGB(255,0,0));
+      delay(400);
+    }
+    else if(color == 1){
+      FastLED.showColor(CRGB(0,255,0));
+      delay(400);
+     } 
+    else if(color == 2){
+      FastLED.showColor(CRGB(0,0,255));
+      delay(400);
+    }
+  }
+  else{
+    patternIndex++;
+  }
   
+}
+
+void colorChange(){
+  if(color<3){
+    ++color;
+  }
+  else{
+    color = 0;
+  }
+}
+
+void solidRainbow(){
+  FastLED.showColor(CHSV(gHue,255,255));
+  
+}
