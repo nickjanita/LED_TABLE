@@ -26,6 +26,7 @@ FASTLED_USING_NAMESPACE
 //Initializing memory for LEDS
 CRGB leds[NUM_LEDS];
 char btValue = "";
+String inputString = "";
 
 void setup() {
   delay(3000); // 3 second delay for recovery
@@ -59,13 +60,18 @@ void setup() {
   
 void loop()
 { 
+  //Reading in BT value if any 
   if (Serial.available()) {
     
       btValue = Serial.read();
       Serial.print(btValue);
     
   }
-    
+
+  if(btValue == '2'){
+    btColor();
+  }
+  
 //  //plays current pattern
     patternList[patternIndex]();
 
@@ -284,4 +290,20 @@ void colorChange(){
 void solidRainbow(){
   FastLED.showColor(CHSV(gHue,255,255));
   
+}
+
+String btColor(){
+  //delays the method untill serial is available
+  while(!Serial.available()){
+    delay(1);
+  }
+
+ while(Serial.available()){:
+    char inChar = (char)Serial.read();
+    // add it to the inputString:
+    inputString += inChar;
+    
+ }
+ FastLED.showColor(inputString.toInt());
+ 
 }
