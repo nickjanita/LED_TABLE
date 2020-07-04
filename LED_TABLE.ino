@@ -8,6 +8,7 @@
 
 #include <FastLED.h>
 
+
 FASTLED_USING_NAMESPACE
 //567 is original num
 #define DATA_PIN    2
@@ -24,11 +25,15 @@ FASTLED_USING_NAMESPACE
 
 //Initializing memory for LEDS
 CRGB leds[NUM_LEDS];
+char btValue = "";
 
 void setup() {
   delay(3000); // 3 second delay for recovery
-  //Serial.begin(9600);
+  //
+  Serial.begin(9600);
+    
   //Bluetooth Value
+  
   //Configuring leds to FastLED
   FastLED.addLeds<LED_TYPE,DATA_PIN>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
@@ -36,7 +41,7 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
 
   //Setting up button with a Pullup resistor (press is low)
-  pinMode(BUTTON_PIN, INPUT_PULLUP); 
+   pinMode(BUTTON_PIN, INPUT_PULLUP); 
   
 
 }
@@ -54,26 +59,32 @@ void setup() {
   
 void loop()
 { 
-  //plays current pattern
-  patternList[patternIndex]();
+  if (Serial.available()) {
+    
+      btValue = Serial.read();
+      Serial.print(btValue);
+    
+  }
+    
+//  //plays current pattern
+    patternList[patternIndex]();
 
   //Shows the current LED pattern
   if(patternIndex != 0){
       FastLED.show();  
       FastLED.delay(1000/FRAMES_PER_SECOND);
   }
-  
-  //Delay to change speed of the LEDS
-  //
-
+//Delay to change speed of the LEDS
+//
    //Reading if button is pressed, if it is, half second delay and pattern change
-  if((digitalRead(BUTTON_PIN) == false)){
+  if((digitalRead(BUTTON_PIN) == false)||(btValue == '1')){
     nextPattern();
     delay(500);
+    btValue = "";
   }
 
   //Changes the speed of the color change in patterns that use gHue
-  EVERY_N_MILLISECONDS(1) {
+  EVERY_N_MILLISECONDS(10) {
     ++gHue;
     } 
 }
@@ -116,8 +127,12 @@ void OHIO()
   FastLED.show();
   for(int dot = 0; dot < ROW_1; dot++) { 
     //
-
-    if(digitalRead(BUTTON_PIN) == true){
+    if (Serial.available()){
+      btValue = Serial.read();
+      Serial.write(btValue);
+    }
+    
+    if((digitalRead(BUTTON_PIN) == true && btValue != '1')){
       //O
       //Bottom Layer
       leds[ROW_0 + dot] = CRGB::White;
@@ -231,7 +246,13 @@ void juggle() {
 }
 void caramelldansen(){
   colorChange();
-  if(digitalRead(BUTTON_PIN) == true){
+  char btValue = '0';
+  if (Serial.available()) {
+      btValue = Serial.read();
+      Serial.print(btValue);
+    }
+  
+  if(digitalRead(BUTTON_PIN) == true || btValue != 1){
     if(color == 0){
       FastLED.showColor(CRGB(255,0,0));
       delay(400);
