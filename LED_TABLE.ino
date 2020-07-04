@@ -26,6 +26,7 @@ FASTLED_USING_NAMESPACE
 //Initializing memory for LEDS
 CRGB leds[NUM_LEDS];
 char btValue = "";
+char input = "";
 String inputString = "";
 
 void setup() {
@@ -298,12 +299,19 @@ String btColor(){
     delay(1);
   }
 
- while(Serial.available()){:
-    char inChar = (char)Serial.read();
-    // add it to the inputString:
-    inputString += inChar;
+ while(Serial.available()){
+    input = Serial.read();
+    delay(100);
+    Serial.print(input); 
+    Serial.print("\n");
     
+    inputString = inputString + input;
+
  }
- FastLED.showColor(inputString.toInt());
- 
+ while(btValue != '1'){
+    FastLED.showColor(inputString.toInt());
+    if(Serial.available()){
+      btValue = Serial.read();
+    }
+ }
 }
