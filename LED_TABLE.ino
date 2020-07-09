@@ -62,13 +62,9 @@ void setup() {
 void loop()
 { 
   //Reading in BT value if any 
-  if (Serial.available()) {
-    
-      btValue = Serial.read();
-      Serial.print(btValue);
-    
-  }
+  btValueReader();
 
+  //If the BT value is 2 it goes to Solid color mode
   if(btValue == '2'){
     btColor();
   }
@@ -84,7 +80,7 @@ void loop()
 //Delay to change speed of the LEDS
 //
    //Reading if button is pressed, if it is, half second delay and pattern change
-  if((digitalRead(BUTTON_PIN) == false)||(btValue == '1')){
+  if(patternChange()){
     nextPattern();
     delay(500);
     btValue = "";
@@ -294,24 +290,52 @@ void solidRainbow(){
 }
 
 String btColor(){
-  //delays the method untill serial is available
-  while(!Serial.available()){
-    delay(1);
-  }
-
- while(Serial.available()){
-    input = Serial.read();
-    delay(100);
-    Serial.print(input); 
-    Serial.print("\n");
-    
-    inputString = inputString + input;
-
- }
- while(btValue != '1'){
-    FastLED.showColor(inputString.toInt());
-    if(Serial.available()){
-      btValue = Serial.read();
+  while(btValue!=1){
+    //delays the method untill serial is available
+    while(!Serial.available()&&!patternChange()){
+      delay(1);
+      Serial.print("Waiting for color choice...");
+      Serial.print("\n");
     }
- }
+   inputString = "";
+  //Reading in the RGB value to a string
+   while(Serial.available()){
+      input = Serial.read();
+      //Have to delay to give ardunio time to keep up
+      delay(100);
+      Serial.print(input); 
+      Serial.print("\n");
+  
+      inputString = inputString + input;
+  
+   }
+    while(!Serial.available()&&!patternChange()){
+      FastLED.showColor(inputString.toInt());
+      Serial.print("Color complete");
+      Serial.print("\n");
+    }
+    if(Serial.available()==1){
+        btValue = Serial.read();
+        Serial.print("Read in a new btValue in btColor");
+        Serial.print("\n");
+    }
+  }   
+}
+
+boolean patternChange() {
+  boolean changed = false;
+  if(btValue == '1'){
+    changed = true;
+  }
+  else if(digitalRead(BUTTON_PIN) == false){
+    changed = true;
+  }
+  return changed;
+}
+
+void btValueReader(){
+  if(Serial.available()){
+    btValue = Serial.read();
+    Serial.print(btValue);
+  }
 }
