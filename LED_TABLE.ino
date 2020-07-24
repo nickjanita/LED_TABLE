@@ -28,6 +28,8 @@ CRGB leds[NUM_LEDS];
 char btValue = "";
 char input = "";
 String inputString = "";
+//The last int in the array is the background color
+long customPat[43];
 
 void setup() {
   delay(3000); // 3 second delay for recovery
@@ -63,10 +65,14 @@ void loop()
 { 
   //Reading in BT value if any 
   btValueReader();
-
+   
   //If the BT value is 2 it goes to Solid color mode
   if(btValue == '2'){
+    Serial.println("Going to btColor()");
     btColor();
+  }
+  if(btValue == '3'){
+    customPattern();
   }
   
 //  //plays current pattern
@@ -87,8 +93,8 @@ void loop()
   }
 
   //Changes the speed of the color change in patterns that use gHue
-  EVERY_N_MILLISECONDS(10) {
-    ++gHue;
+  EVERY_N_MILLISECONDS(1) {
+    gHue+=5;
     } 
 }
 
@@ -105,9 +111,9 @@ void nextPattern()
 void rainbow() 
 {
   // using the rainbow function, the LEDS are split evenly so the effect is even in table
-  fill_rainbow(&leds[ROW_0], ROW_1, gHue, 7);
-  fill_rainbow(&leds[ROW_1], ROW_1, gHue, 7); 
-  fill_rainbow(&leds[ROW_2], ROW_1, gHue, 7);
+  fill_rainbow(&leds[ROW_0], ROW_1, gHue, 5);
+  fill_rainbow(&leds[ROW_1], ROW_1, gHue, 5); 
+  fill_rainbow(&leds[ROW_2], ROW_1, gHue, 5);
 
 }
 
@@ -289,10 +295,13 @@ void solidRainbow(){
   
 }
 
-String btColor(){
-  while(btValue!=1){
+void btColor(){
+  Serial.println("In btColor");
+  while(btValue== '2'){
     //delays the method untill serial is available
-    while(!Serial.available()&&!patternChange()){
+    Serial.println("btValue is still 2");
+    delay(10);
+    while(!Serial.available()){
       delay(1);
       Serial.print("Waiting for color choice...");
       Serial.print("\n");
@@ -302,7 +311,7 @@ String btColor(){
    while(Serial.available()){
       input = Serial.read();
       //Have to delay to give ardunio time to keep up
-      delay(100);
+      delay(150);
       Serial.print(input); 
       Serial.print("\n");
   
@@ -338,4 +347,119 @@ void btValueReader(){
     btValue = Serial.read();
     Serial.print(btValue);
   }
+}
+
+void customPattern(){
+  //Saving the LEDS to an Array so it is saved
+//  while(btValue==2){
+//    //delays the method untill serial is available
+//    while(!Serial.available()&&!patternChange()){
+//      delay(1);
+//      Serial.print("Waiting for color choice...");
+//      Serial.print("\n");
+//    }
+//   inputString = "";
+//  //Reading in the RGB value to a string
+//   while(Serial.available()){
+//      input = Serial.read();
+//      //Have to delay to give ardunio time to keep up
+//      delay(100);
+//      Serial.print(input); 
+//      Serial.print("\n");
+//  
+//      inputString = inputString + input;
+//  
+//   }
+  while(!Serial.available()){
+    delay(1);
+    //Serial.println("Waiting for pattern...");
+  }
+      Serial.read();
+  for(int i = 0;i<43;++i){
+      inputString = "-" + Serial.readStringUntil('-');
+      
+      customPat[i] = inputString.toInt();
+      Serial.println(customPat[i]);
+  }
+    
+  Serial.println("Now setting back color");
+  //Getting background color
+  int backColor = customPat[42];
+
+  FastLED.showColor(backColor);
+  delay(1000);
+  Serial.println("Now setting up loops");
+  while(true){
+    /*
+     * This loop increases the movement of the pattern by one to make the LEDs "move"
+     */
+  
+  for(int k = 0;k<NUM_LEDS/3;++k){
+    int l = 0;
+    int m = 0;
+    int n = 0;
+    int w = 0;
+    int x = 0;
+    int z = 0;
+     for(int i = 0;i<42;++i){
+        //Bottom Row
+        if(i>27 && i<=41){
+          if(w+k<NUM_LEDS/3){
+            leds[w+k] = customPat[i]; 
+//            Serial.println("LEDS on at: ");
+//            Serial.println(w+k);
+//            delay(10);
+            ++w;
+            
+          }else{
+            leds[l] = customPat[i];
+            ++l;
+            Serial.println("LEDS on at: ");
+            delay(10);
+          }
+        }
+        //Second Row
+        if(i>13 && i<=27){
+          if(x+k<NUM_LEDS/3){
+            leds[x+k+ROW_1] = customPat[i];
+//            Serial.println("LEDS on at: ");
+//            Serial.println(x+k+ROW_1);
+//            delay(10);
+            ++x;
+            
+          }else{
+           leds[m+ROW_1] = customPat[i];
+            ++m;
+//            Serial.println("LEDS on at: ");
+//            delay(10);
+
+          }
+        }
+        //Top Row
+        if(i<=13){
+          //Checking to make sure LED postion doesnt exceed total num of leds in a row
+          if(z+k<NUM_LEDS/3){
+            leds[z+k+ROW_2] = customPat[i];
+            ++z;
+//            Serial.println("LEDS on at: ");
+//            Serial.println(z+k+ROW_2);
+//            delay(10);
+
+          }else{
+           leds[n+ROW_2] = customPat[i];
+            ++n;
+//            Serial.println("LEDS on at: ");
+//            delay(10);
+          }
+        }     
+      }
+      FastLED.show();
+      
+      leds[k] = backColor;
+      leds[k + ROW_1] = backColor;
+      leds[k + ROW_2] = backColor;
+      delay(50);
+  }
+      
+ }
 }
