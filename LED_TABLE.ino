@@ -52,7 +52,7 @@ void setup() {
 
    //Creating array of the pattern functions
   typedef void (*ledPatterns)();
-  ledPatterns patternList[] = {solidRainbow,rainbow, confetti, OHIO, juggle, bpm,caramelldansen};
+  ledPatterns patternList[] = {solidRainbow,horizontalLines,rainbow, confetti, OHIO, juggle, bpm,caramelldansen};
   
   // Index number of which pattern is currently playing
   int patternIndex = 0;
@@ -108,6 +108,17 @@ void nextPattern()
   }
 }
 
+void horizontalLines()
+{
+  fill_rainbow(&leds[ROW_0], ROW_1, gHue, 5);
+  fadeToBlackBy(leds, NUM_LEDS, 10);
+  fill_rainbow(&leds[ROW_1], ROW_1, gHue, 5);
+  fadeToBlackBy(leds, NUM_LEDS, 10); 
+  fill_rainbow(&leds[ROW_2], ROW_1, gHue, 5);
+  fadeToBlackBy(leds, NUM_LEDS, 10); 
+
+}
+
 void rainbow() 
 {
   // using the rainbow function, the LEDS are split evenly so the effect is even in table
@@ -117,7 +128,6 @@ void rainbow()
 
 }
 
-//TODO: Get rid of this ugly pattern
 void confetti() 
 {
   // random colored speckles that blink in and fade smoothly
@@ -127,7 +137,7 @@ void confetti()
 }
 
 
-//TODO: create an escape for when button is pressed and clean up code cause good god 
+
 void OHIO()
 {
   for(int i = 0; i<NUM_LEDS; i++){
@@ -232,7 +242,6 @@ void OHIO()
 
 
 //Some extra functions that were found
-//TODO: split evenly between the rows
 void bpm()
 {
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
